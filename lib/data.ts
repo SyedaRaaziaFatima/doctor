@@ -105,7 +105,9 @@ export async function getPatientDashboard(userId: string) {
   const prescriptionsWithDoctors = (prescriptions.data || []).map((prescription) => ({
     ...prescription,
     doctor_profile:
-      doctorProfiles.data?.find((doctor) => doctor.id === prescription.doctor_id) || null
+      doctorProfiles.data?.find((doctor) => doctor.id === prescription.doctor_id) || null,
+    appointment:
+      appointments.data?.find((appointment) => appointment.id === prescription.appointment_id) || null
   }));
 
   return {

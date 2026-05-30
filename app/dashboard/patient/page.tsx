@@ -22,10 +22,80 @@ export default async function PatientDashboardPage() {
     <DashboardShell profile={profile}>
       <div className="mb-6 grid gap-5 md:grid-cols-4">
         <StatCard label="Appointments" value={appointments.length} />
-        <StatCard label="Prescriptions" value={prescriptions.length} />
+        <StatCard label="Doctor Responses" value={prescriptions.length} />
         <StatCard label="History Records" value={history.length} />
         <StatCard label="Reports" value={reports.length} />
       </div>
+
+      <Card className="mb-6 border-teal-200 bg-teal-50/70">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-teal-700">Doctor Response</p>
+            <h2 className="mt-2 text-3xl font-bold text-slate-950">Prescriptions and Medical Advice</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Your doctor responses appear here after a doctor writes a prescription for your appointment.
+            </p>
+          </div>
+          <Badge tone={prescriptions.length > 0 ? "teal" : "amber"}>
+            {prescriptions.length > 0 ? `${prescriptions.length} response(s)` : "Waiting for doctor"}
+          </Badge>
+        </div>
+
+        <div className="mt-6 grid gap-5">
+          {prescriptions.map((item) => {
+            const doctorProfile = item.doctor_profile as { full_name?: string } | null;
+            const appointment = item.appointment as {
+              reason?: string;
+              appointment_date?: string;
+              appointment_time?: string;
+            } | null;
+
+            return (
+              <div key={String(item.id)} className="rounded-3xl border border-teal-100 bg-white p-5 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-teal-700">
+                      Dr. {String(doctorProfile?.full_name || "Doctor")}
+                    </p>
+                    <h3 className="mt-1 text-2xl font-bold text-slate-950">{String(item.diagnosis)}</h3>
+                    {appointment ? (
+                      <p className="mt-2 text-sm text-slate-500">
+                        For: {String(appointment.reason || "Consultation")} | {String(appointment.appointment_date || "")}{" "}
+                        {String(appointment.appointment_time || "")}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Badge tone="teal">Prescription</Badge>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-sm font-bold text-slate-950">Medicines</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{String(item.medicines)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-sm font-bold text-slate-950">Doctor Notes</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                      {String(item.notes || "No extra notes added.")}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-xs text-slate-500">Written on {String(item.created_at)}</p>
+              </div>
+            );
+          })}
+
+          {prescriptions.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-teal-200 bg-white p-6 text-center">
+              <h3 className="text-xl font-bold text-slate-950">No doctor response yet</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                After your appointment, the doctor can write a diagnosis, medicines, and notes. They will show here.
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <Card>
@@ -70,24 +140,7 @@ export default async function PatientDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card>
-          <h2 className="text-2xl font-bold text-slate-950">Prescriptions</h2>
-          <div className="mt-5 grid gap-4">
-            {prescriptions.map((item) => (
-              <div key={String(item.id)} className="rounded-2xl bg-slate-50 p-4">
-                <p className="font-semibold text-slate-950">{String(item.diagnosis)}</p>
-                <p className="mt-1 text-sm font-medium text-teal-700">
-                  Dr. {String((item.doctor_profile as { full_name?: string } | null)?.full_name || "Doctor")}
-                </p>
-                <p className="mt-2 text-sm text-slate-600">{String(item.medicines)}</p>
-                {item.notes ? <p className="mt-2 text-sm text-slate-600">{String(item.notes)}</p> : null}
-                <p className="mt-2 text-xs text-slate-500">{String(item.created_at)}</p>
-              </div>
-            ))}
-            {prescriptions.length === 0 ? <p className="text-sm text-slate-600">No prescriptions yet.</p> : null}
-          </div>
-        </Card>
+      <div className="mt-6 grid gap-6">
         <Card>
           <h2 className="text-2xl font-bold text-slate-950">History and Reports</h2>
           <div className="mt-5 grid gap-4">
