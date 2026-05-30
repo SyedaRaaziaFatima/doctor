@@ -134,12 +134,37 @@ export async function getAppointment(appointmentId: string, userId: string) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return null;
 
-  const { data } = await supabase
+  const { data: appointment, error } = await supabase
     .from("appointments")
-    .select("*, doctors(*, profiles(full_name, email, phone)), payments(*)")
+    .select("*")
     .eq("id", appointmentId)
     .or(`patient_id.eq.${userId},doctor_id.eq.${userId}`)
     .single();
 
-  return data;
+  if (error || !appointment) return null;
+
+  const [doctor, doctorProfile, payments] = await Promise.all([
+    supabase.from("doctors").select("*").eq("user_id", appointment.doctor_id).single(),
+    supabase
+      .from("profiles")
+      .select("full_name, email, phone")
+      .eq("id", appointment.doctor_id)
+      .single(),
+    supabase
+      .from("payments")
+      .select("*")
+      .eq("appointment_id", appointment.id)
+      .order("created_at", { ascending: false })
+  ]);
+
+  return {
+    ...appointment,
+    doctors: doctor.data
+      ? {
+          ...doctor.data,
+          profiles: doctorProfile.data
+        }
+      : null,
+    payments: payments.data || []
+  };
 }
