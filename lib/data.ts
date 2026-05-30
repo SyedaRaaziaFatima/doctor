@@ -1,8 +1,42 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function getDoctors(filters?: { disease?: string; treatment?: string; city?: string }) {
+type DoctorSearchFilters = {
+  q?: string;
+  disease?: string;
+  treatment?: string;
+  city?: string;
+};
+
+type DoctorSearchRow = {
+  specialization?: string | null;
+  diseases?: string[] | null;
+  city?: string | null;
+  bio?: string | null;
+  profiles?: { full_name?: string | null; email?: string | null; phone?: string | null } | null;
+};
+
+function includesSearch(value: string | null | undefined, search: string) {
+  return (value || "").toLowerCase().includes(search);
+}
+
+function doctorMatchesSearch(doctor: DoctorSearchRow, search: string) {
+  if (!search) return true;
+
+  return (
+    includesSearch(doctor.profiles?.full_name, search) ||
+    includesSearch(doctor.specialization, search) ||
+    includesSearch(doctor.city, search) ||
+    includesSearch(doctor.bio, search) ||
+    (doctor.diseases || []).some((disease) => includesSearch(disease, search))
+  );
+}
+
+export async function getDoctors(filters?: DoctorSearchFilters) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
+
+  const search = (filters?.q || filters?.disease || "").trim().toLowerCase();
+  const city = (filters?.city || "").trim().toLowerCase();
 
   let query = supabase
     .from("doctors")
@@ -10,11 +44,13 @@ export async function getDoctors(filters?: { disease?: string; treatment?: strin
     .order("created_at", { ascending: false });
 
   if (filters?.treatment) query = query.eq("treatment_type", filters.treatment);
-  if (filters?.city) query = query.ilike("city", `%${filters.city}%`);
-  if (filters?.disease) query = query.contains("diseases", [filters.disease]);
 
   const { data } = await query;
-  return data || [];
+  return (data || []).filter((doctor) => {
+    const matchesMainSearch = doctorMatchesSearch(doctor, search);
+    const matchesCity = city ? includesSearch(doctor.city, city) : true;
+    return matchesMainSearch && matchesCity;
+  });
 }
 
 export async function getPatientDashboard(userId: string) {

@@ -20,7 +20,7 @@ type DoctorRow = {
 export default async function DoctorsPage({
   searchParams
 }: {
-  searchParams: Promise<{ disease?: string; treatment?: string; city?: string; message?: string }>;
+  searchParams: Promise<{ q?: string; disease?: string; treatment?: string; city?: string; message?: string }>;
 }) {
   const params = await searchParams;
   const doctors = (await getDoctors(params)) as DoctorRow[];
@@ -40,7 +40,12 @@ export default async function DoctorsPage({
 
         <Card className="mb-8">
           <form className="grid gap-4 md:grid-cols-4">
-            <Field label="Disease" name="disease" placeholder="Fever" defaultValue={params.disease} />
+            <Field
+              label="Search doctor or disease"
+              name="q"
+              placeholder="Doctor name, fever, skin, cardiology..."
+              defaultValue={params.q || params.disease}
+            />
             <label className="grid gap-2 text-sm font-medium text-slate-700">
               Treatment
               <select name="treatment" defaultValue={params.treatment || ""} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-teal-500/20 focus:ring-4">
@@ -95,6 +100,14 @@ export default async function DoctorsPage({
               )}
             </Card>
           ))}
+          {doctors.length === 0 ? (
+            <Card className="lg:col-span-2 text-center">
+              <h2 className="text-2xl font-bold text-slate-950">No doctors found</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Try searching with a doctor name, disease, specialization, or a different city.
+              </p>
+            </Card>
+          ) : null}
         </div>
       </Container>
     </main>
