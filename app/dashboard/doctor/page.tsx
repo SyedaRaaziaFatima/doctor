@@ -109,7 +109,10 @@ export default async function DoctorDashboardPage({
                         <form action={manageDoctorAppointmentAction}>
                           <input type="hidden" name="appointmentId" value={String(appointment.id)} />
                           <input type="hidden" name="decision" value="reject" />
-                          <button className="inline-flex items-center justify-center rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100">
+                          <button
+                            type="submit"
+                            className="inline-flex items-center justify-center rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                          >
                             Reject
                           </button>
                         </form>

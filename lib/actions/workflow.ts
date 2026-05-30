@@ -241,22 +241,36 @@ export async function manageDoctorAppointmentAction(formData: FormData) {
   const decision = value(formData, "decision");
   const status = decision === "confirm" ? "confirmed" : "cancelled";
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("appointments")
     .update({
       status,
       updated_at: new Date().toISOString()
     })
     .eq("id", appointmentId)
-    .eq("doctor_id", user.id);
+    .eq("doctor_id", user.id)
+    .select("id,status")
+    .single<{ id: string; status: string }>();
 
   if (error) {
     redirect(`/dashboard/doctor?message=${encodeURIComponent(error.message)}`);
   }
 
+  if (!data) {
+    redirect(
+      `/dashboard/doctor?message=${encodeURIComponent(
+        "Appointment was not updated. Please make sure this appointment belongs to your doctor account."
+      )}`
+    );
+  }
+
   revalidatePath("/dashboard/doctor");
   revalidatePath("/dashboard/patient");
-  redirect(`/dashboard/doctor?message=${encodeURIComponent(`Appointment ${status}`)}`);
+  redirect(
+    `/dashboard/doctor?message=${encodeURIComponent(
+      decision === "confirm" ? "Appointment accepted" : "Appointment rejected"
+    )}`
+  );
 }
 
 export async function addMedicalHistoryAction(formData: FormData) {
