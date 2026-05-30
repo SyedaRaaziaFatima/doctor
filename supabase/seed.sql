@@ -1,0 +1,4 @@
+-- Optional demo data.
+-- Register doctor users from the app first, then update their profile and doctor rows from the dashboard.
+-- To make the first admin, register a user and run:
+-- update public.profiles set role = 'super_admin' where email = 'your-email@example.com';
