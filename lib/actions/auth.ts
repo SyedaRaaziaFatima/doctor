@@ -36,6 +36,18 @@ export async function signUpAction(formData: FormData) {
     redirect(`/register?message=${encodeURIComponent(error?.message || "Sign up failed")}`);
   }
 
+  if (!data.session) {
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError) {
+      redirect(
+        `/register?message=${encodeURIComponent(
+          "Registration is blocked by Supabase email confirmation. In Supabase, go to Authentication > Sign In / Providers > Email and turn off Confirm email."
+        )}`
+      );
+    }
+  }
+
   await supabase.from("profiles").upsert({
     id: data.user.id,
     full_name: fullName,

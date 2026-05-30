@@ -20,7 +20,9 @@ export default async function RegisterPage({
       <Container className="max-w-2xl">
         <Card>
           <h1 className="text-3xl font-bold text-slate-950">Create Account</h1>
-          <p className="mt-2 text-slate-600">Patients and doctors can register directly. Assistants and admins are created by admin users.</p>
+          <p className="mt-2 text-slate-600">
+            Patients and doctors can register directly and login immediately. Assistants and admins are created by admin users.
+          </p>
           {params.message ? (
             <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">{params.message}</p>
           ) : null}
