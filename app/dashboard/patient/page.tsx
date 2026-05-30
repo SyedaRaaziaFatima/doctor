@@ -27,100 +27,95 @@ export default async function PatientDashboardPage() {
         <StatCard label="Reports" value={reports.length} />
       </div>
 
-      <Card className="mb-6 border-teal-200 bg-teal-50/70">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-teal-700">Doctor Response</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-950">Prescriptions and Medical Advice</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Your doctor responses appear here after a doctor writes a prescription for your appointment.
-            </p>
-          </div>
-          <Badge tone={prescriptions.length > 0 ? "teal" : "amber"}>
-            {prescriptions.length > 0 ? `${prescriptions.length} response(s)` : "Waiting for doctor"}
-          </Badge>
-        </div>
-
-        <div className="mt-6 grid gap-5">
-          {prescriptions.map((item) => {
-            const doctorProfile = item.doctor_profile as { full_name?: string } | null;
-            const appointment = item.appointment as {
-              reason?: string;
-              appointment_date?: string;
-              appointment_time?: string;
-            } | null;
-
-            return (
-              <div key={String(item.id)} className="rounded-3xl border border-teal-100 bg-white p-5 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-teal-700">
-                      Dr. {String(doctorProfile?.full_name || "Doctor")}
-                    </p>
-                    <h3 className="mt-1 text-2xl font-bold text-slate-950">{String(item.diagnosis)}</h3>
-                    {appointment ? (
-                      <p className="mt-2 text-sm text-slate-500">
-                        For: {String(appointment.reason || "Consultation")} | {String(appointment.appointment_date || "")}{" "}
-                        {String(appointment.appointment_time || "")}
-                      </p>
-                    ) : null}
-                  </div>
-                  <Badge tone="teal">Prescription</Badge>
-                </div>
-
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm font-bold text-slate-950">Medicines</p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{String(item.medicines)}</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-sm font-bold text-slate-950">Doctor Notes</p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                      {String(item.notes || "No extra notes added.")}
-                    </p>
-                  </div>
-                </div>
-
-                <p className="mt-4 text-xs text-slate-500">Written on {String(item.created_at)}</p>
-              </div>
-            );
-          })}
-
-          {prescriptions.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-teal-200 bg-white p-6 text-center">
-              <h3 className="text-xl font-bold text-slate-950">No doctor response yet</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                After your appointment, the doctor can write a diagnosis, medicines, and notes. They will show here.
-              </p>
-            </div>
-          ) : null}
-        </div>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card>
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-slate-950">My Appointments</h2>
-            <Link href="/doctors" className="text-sm font-semibold text-teal-700">Book New</Link>
-          </div>
-          <div className="grid gap-4">
-            {appointments.length === 0 ? (
-              <EmptyState title="No appointments yet" text="Find a doctor and book your first consultation." />
-            ) : (
-              appointments.map((appointment) => (
-                <Link key={String(appointment.id)} href={`/appointments/${appointment.id}`} className="rounded-2xl border border-slate-200 p-4 transition hover:border-teal-300">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-950">{String(appointment.reason || "Consultation")}</p>
-                    <Badge tone={appointment.status === "confirmed" ? "teal" : "amber"}>{String(appointment.status)}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-600">{String(appointment.appointment_date)} at {String(appointment.appointment_time)}</p>
-                </Link>
-              ))
-            )}
-          </div>
-        </Card>
-
+      <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="grid gap-6">
+          <Card>
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-950">Doctor Response</h2>
+                <p className="mt-1 text-sm text-slate-600">Prescriptions and advice from your doctors.</p>
+              </div>
+              <Badge tone={prescriptions.length > 0 ? "teal" : "amber"}>
+                {prescriptions.length > 0 ? `${prescriptions.length} response(s)` : "Waiting"}
+              </Badge>
+            </div>
+
+            <div className="grid gap-4">
+              {prescriptions.map((item) => {
+                const doctorProfile = item.doctor_profile as { full_name?: string } | null;
+                const appointment = item.appointment as {
+                  reason?: string;
+                  appointment_date?: string;
+                  appointment_time?: string;
+                } | null;
+
+                return (
+                  <div key={String(item.id)} className="rounded-2xl border border-teal-100 bg-teal-50/60 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-teal-700">
+                          Dr. {String(doctorProfile?.full_name || "Doctor")}
+                        </p>
+                        <h3 className="mt-1 text-xl font-bold text-slate-950">{String(item.diagnosis)}</h3>
+                        {appointment ? (
+                          <p className="mt-1 text-xs text-slate-500">
+                            {String(appointment.reason || "Consultation")} | {String(appointment.appointment_date || "")}{" "}
+                            {String(appointment.appointment_time || "")}
+                          </p>
+                        ) : null}
+                      </div>
+                      <Badge tone="teal">Prescription</Badge>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-2xl bg-white p-4">
+                        <p className="text-sm font-bold text-slate-950">Medicines</p>
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{String(item.medicines)}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white p-4">
+                        <p className="text-sm font-bold text-slate-950">Doctor Notes</p>
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                          {String(item.notes || "No extra notes added.")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {prescriptions.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
+                  <h3 className="font-bold text-slate-950">No doctor response yet</h3>
+                  <p className="mt-2 text-sm text-slate-600">When your doctor writes a prescription, it will appear here.</p>
+                </div>
+              ) : null}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-950">My Appointments</h2>
+              <Link href="/doctors" className="text-sm font-semibold text-teal-700">Book New</Link>
+            </div>
+            <div className="grid gap-4">
+              {appointments.length === 0 ? (
+                <EmptyState title="No appointments yet" text="Find a doctor and book your first consultation." />
+              ) : (
+                appointments.map((appointment) => (
+                  <Link key={String(appointment.id)} href={`/appointments/${appointment.id}`} className="rounded-2xl border border-slate-200 p-4 transition hover:border-teal-300">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="font-semibold text-slate-950">{String(appointment.reason || "Consultation")}</p>
+                      <Badge tone={appointment.status === "confirmed" ? "teal" : "amber"}>{String(appointment.status)}</Badge>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-600">{String(appointment.appointment_date)} at {String(appointment.appointment_time)}</p>
+                  </Link>
+                ))
+              )}
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid content-start gap-6">
           <Card>
             <h2 className="text-xl font-bold text-slate-950">Add Medical History</h2>
             <form action={addMedicalHistoryAction} className="mt-5 grid gap-4">
@@ -129,6 +124,7 @@ export default async function PatientDashboardPage() {
               <SubmitButton>Save History</SubmitButton>
             </form>
           </Card>
+
           <Card>
             <h2 className="text-xl font-bold text-slate-950">Upload Report</h2>
             <form action={uploadReportAction} className="mt-5 grid gap-4">
@@ -137,22 +133,20 @@ export default async function PatientDashboardPage() {
               <SubmitButton>Upload Report</SubmitButton>
             </form>
           </Card>
-        </div>
-      </div>
 
-      <div className="mt-6 grid gap-6">
-        <Card>
-          <h2 className="text-2xl font-bold text-slate-950">History and Reports</h2>
-          <div className="mt-5 grid gap-4">
-            {[...history, ...reports].map((item) => (
-              <div key={String(item.id)} className="rounded-2xl bg-slate-50 p-4">
-                <p className="font-semibold text-slate-950">{String(item.title)}</p>
-                <p className="mt-2 text-sm text-slate-600">{String(item.details || item.file_path || "")}</p>
-              </div>
-            ))}
-            {history.length + reports.length === 0 ? <p className="text-sm text-slate-600">No medical records yet.</p> : null}
-          </div>
-        </Card>
+          <Card>
+            <h2 className="text-xl font-bold text-slate-950">History and Reports</h2>
+            <div className="mt-5 grid gap-4">
+              {[...history, ...reports].map((item) => (
+                <div key={String(item.id)} className="rounded-2xl bg-slate-50 p-4">
+                  <p className="font-semibold text-slate-950">{String(item.title)}</p>
+                  <p className="mt-2 text-sm text-slate-600">{String(item.details || item.file_path || "")}</p>
+                </div>
+              ))}
+              {history.length + reports.length === 0 ? <p className="text-sm text-slate-600">No medical records yet.</p> : null}
+            </div>
+          </Card>
+        </div>
       </div>
     </DashboardShell>
   );
