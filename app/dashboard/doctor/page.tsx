@@ -79,6 +79,8 @@ export default async function DoctorDashboardPage({
               const patient = appointment.profiles as { full_name?: string; email?: string } | undefined;
               const payments = (appointment.payments as PaymentProof[] | undefined) || [];
               const latestPayment = payments[0];
+              const appointmentStatus = String(appointment.status);
+              const isFinalAppointment = ["confirmed", "cancelled", "completed"].includes(appointmentStatus);
               return (
                 <div key={String(appointment.id)} className="rounded-2xl border border-slate-200 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -89,7 +91,13 @@ export default async function DoctorDashboardPage({
                         {String(appointment.appointment_date || "")} {String(appointment.appointment_time || "")}
                       </p>
                     </div>
-                    <Badge tone={appointment.status === "confirmed" ? "teal" : "amber"}>{String(appointment.status)}</Badge>
+                    <Badge tone={appointmentStatus === "confirmed" ? "teal" : appointmentStatus === "cancelled" ? "red" : "amber"}>
+                      {appointmentStatus === "confirmed"
+                        ? "Confirmed"
+                        : appointmentStatus === "cancelled"
+                          ? "Rejected"
+                          : appointmentStatus}
+                    </Badge>
                   </div>
 
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -97,28 +105,53 @@ export default async function DoctorDashboardPage({
                       <div>
                         <p className="font-semibold text-slate-950">Appointment Management</p>
                         <p className="mt-1 text-sm text-slate-600">
-                          Payment: {latestPayment?.status || "not uploaded"} | Appointment: {String(appointment.status)}
+                          Payment: {latestPayment?.status || "not uploaded"} | Appointment:{" "}
+                          {appointmentStatus === "confirmed"
+                            ? "confirmed"
+                            : appointmentStatus === "cancelled"
+                              ? "rejected"
+                              : appointmentStatus}
                         </p>
                       </div>
-                      <div className="flex flex-wrap gap-3">
-                        <form action={manageDoctorAppointmentAction}>
-                          <input type="hidden" name="appointmentId" value={String(appointment.id)} />
-                          <input type="hidden" name="decision" value="confirm" />
-                          <SubmitButton loadingText="Confirming...">Confirm</SubmitButton>
-                        </form>
-                        <form action={manageDoctorAppointmentAction}>
-                          <input type="hidden" name="appointmentId" value={String(appointment.id)} />
-                          <input type="hidden" name="decision" value="reject" />
-                          <button
-                            type="submit"
-                            className="inline-flex items-center justify-center rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
-                          >
-                            Reject
-                          </button>
-                        </form>
-                      </div>
+                      {isFinalAppointment ? (
+                        <div
+                          className={
+                            appointmentStatus === "confirmed"
+                              ? "rounded-full bg-teal-100 px-5 py-3 text-sm font-bold text-teal-800 ring-1 ring-teal-200"
+                              : "rounded-full bg-red-100 px-5 py-3 text-sm font-bold text-red-800 ring-1 ring-red-200"
+                          }
+                        >
+                          {appointmentStatus === "confirmed" ? "Confirmed" : "Rejected"}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-3">
+                          <form action={manageDoctorAppointmentAction}>
+                            <input type="hidden" name="appointmentId" value={String(appointment.id)} />
+                            <input type="hidden" name="decision" value="confirm" />
+                            <SubmitButton loadingText="Confirming...">Confirm</SubmitButton>
+                          </form>
+                          <form action={manageDoctorAppointmentAction}>
+                            <input type="hidden" name="appointmentId" value={String(appointment.id)} />
+                            <input type="hidden" name="decision" value="reject" />
+                            <button
+                              type="submit"
+                              className="inline-flex items-center justify-center rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                            >
+                              Reject
+                            </button>
+                          </form>
+                        </div>
+                      )}
                     </div>
-                    {!latestPayment ? (
+                    {appointmentStatus === "confirmed" ? (
+                      <p className="mt-3 rounded-xl bg-teal-50 px-3 py-2 text-sm text-teal-800">
+                        This appointment has been confirmed. Decision buttons are now hidden.
+                      </p>
+                    ) : appointmentStatus === "cancelled" ? (
+                      <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">
+                        This appointment has been rejected or cancelled. Decision buttons are now hidden.
+                      </p>
+                    ) : !latestPayment ? (
                       <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
                         The patient has not uploaded payment proof yet. You can wait for payment before confirming.
                       </p>
