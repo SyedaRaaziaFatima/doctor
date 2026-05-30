@@ -16,7 +16,7 @@ type AppointmentDetail = {
     specialization?: string;
     profiles?: { full_name?: string; email?: string; phone?: string };
   };
-  payments?: Array<{ status?: string; amount?: number; proof_path?: string }>;
+  payments?: Array<{ status?: string; amount?: number; proof_path?: string; proof_url?: string | null }>;
 };
 
 export default async function AppointmentDetailPage({
@@ -80,6 +80,23 @@ export default async function AppointmentDetailPage({
               <p className="mt-2 text-sm text-slate-600">Status: {latestPayment.status}</p>
               <p className="text-sm text-slate-600">Amount: Rs. {latestPayment.amount}</p>
               <p className="text-xs text-slate-500">Proof path: {latestPayment.proof_path}</p>
+              {latestPayment.proof_url ? (
+                <>
+                  <a
+                    href={latestPayment.proof_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    Open Full Image
+                  </a>
+                  <img
+                    src={latestPayment.proof_url}
+                    alt="Uploaded payment proof"
+                    className="mt-4 max-h-80 w-full rounded-2xl border border-slate-200 bg-white object-contain"
+                  />
+                </>
+              ) : null}
             </div>
           ) : null}
         </Card>

@@ -10,13 +10,13 @@ type PaymentRow = {
   appointment_id: string;
   amount: number;
   proof_path: string;
+  proof_url?: string | null;
   status: string;
+  profiles?: { full_name?: string; email?: string };
   appointments?: {
     reason?: string;
     appointment_date?: string;
     appointment_time?: string;
-    doctors?: { profiles?: { full_name?: string } };
-    profiles?: { full_name?: string; email?: string };
   };
 };
 
@@ -43,13 +43,37 @@ export default async function AssistantDashboardPage() {
             <div key={payment.id} className="rounded-2xl border border-slate-200 p-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="font-semibold text-slate-950">{payment.appointments?.profiles?.full_name || "Patient"}</p>
+                  <p className="font-semibold text-slate-950">{payment.profiles?.full_name || "Patient"}</p>
                   <p className="mt-1 text-sm text-slate-600">{payment.appointments?.reason}</p>
                   <p className="mt-1 text-sm text-slate-600">Amount: Rs. {payment.amount}</p>
                   <p className="mt-1 text-xs text-slate-500">Proof: {payment.proof_path}</p>
                 </div>
                 <Badge tone={payment.status === "approved" ? "teal" : payment.status === "rejected" ? "red" : "amber"}>{payment.status}</Badge>
               </div>
+              {payment.proof_url ? (
+                <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="font-semibold text-slate-950">Uploaded Payment Screenshot</p>
+                    <a
+                      href={payment.proof_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                    >
+                      Open Full Image
+                    </a>
+                  </div>
+                  <img
+                    src={payment.proof_url}
+                    alt="Uploaded payment proof"
+                    className="mt-4 max-h-80 w-full rounded-2xl border border-slate-200 bg-white object-contain"
+                  />
+                </div>
+              ) : (
+                <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  Payment proof image is not available.
+                </p>
+              )}
               {payment.status === "pending" ? (
                 <div className="mt-4 flex flex-wrap gap-3">
                   <form action={verifyPaymentAction}>

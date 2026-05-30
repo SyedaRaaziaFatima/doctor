@@ -5,7 +5,14 @@ import { Badge, Card, Field, TextArea } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { DashboardShell, StatCard } from "@/components/dashboard";
 
-type Row = Record<string, string | number | null | Record<string, unknown>>;
+type PaymentProof = {
+  status?: string;
+  amount?: number;
+  proof_path?: string;
+  proof_url?: string | null;
+};
+
+type Row = Record<string, string | number | null | Record<string, unknown> | PaymentProof[]>;
 
 export default async function DoctorDashboardPage({
   searchParams
@@ -65,6 +72,8 @@ export default async function DoctorDashboardPage({
           <div className="mt-5 grid gap-5">
             {appointments.map((appointment) => {
               const patient = appointment.profiles as { full_name?: string; email?: string } | undefined;
+              const payments = (appointment.payments as PaymentProof[] | undefined) || [];
+              const latestPayment = payments[0];
               return (
                 <div key={String(appointment.id)} className="rounded-2xl border border-slate-200 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -74,6 +83,41 @@ export default async function DoctorDashboardPage({
                     </div>
                     <Badge tone={appointment.status === "confirmed" ? "teal" : "amber"}>{String(appointment.status)}</Badge>
                   </div>
+                  {latestPayment ? (
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-slate-950">Payment Proof</p>
+                          <p className="text-sm text-slate-600">
+                            Status: {latestPayment.status || "pending"} | Amount: Rs. {latestPayment.amount || 0}
+                          </p>
+                        </div>
+                        {latestPayment.proof_url ? (
+                          <a
+                            href={latestPayment.proof_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                          >
+                            Open Full Image
+                          </a>
+                        ) : null}
+                      </div>
+                      {latestPayment.proof_url ? (
+                        <img
+                          src={latestPayment.proof_url}
+                          alt="Uploaded payment proof"
+                          className="mt-4 max-h-72 w-full rounded-2xl border border-slate-200 object-contain"
+                        />
+                      ) : (
+                        <p className="mt-3 text-sm text-slate-500">Payment proof image is not available yet.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      Patient has not uploaded payment proof yet.
+                    </p>
+                  )}
                   <form action={addPrescriptionAction} className="mt-4 grid gap-3 rounded-2xl bg-slate-50 p-4">
                     <input type="hidden" name="appointmentId" value={String(appointment.id)} />
                     <input type="hidden" name="patientId" value={String(appointment.patient_id)} />

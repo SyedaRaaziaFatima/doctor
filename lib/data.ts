@@ -15,6 +15,11 @@ type DoctorSearchRow = {
   profiles?: { full_name?: string | null; email?: string | null; phone?: string | null } | null;
 };
 
+type PaymentRecord = {
+  proof_path?: string | null;
+  [key: string]: unknown;
+};
+
 function includesSearch(value: string | null | undefined, search: string) {
   return (value || "").toLowerCase().includes(search);
 }
@@ -28,6 +33,30 @@ function doctorMatchesSearch(doctor: DoctorSearchRow, search: string) {
     includesSearch(doctor.city, search) ||
     includesSearch(doctor.bio, search) ||
     (doctor.diseases || []).some((disease) => includesSearch(disease, search))
+  );
+}
+
+async function addPaymentProofUrls<T extends PaymentRecord>(payments: T[]) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) {
+    return payments.map((payment) => ({ ...payment, proof_url: null }));
+  }
+
+  return Promise.all(
+    payments.map(async (payment) => {
+      if (!payment.proof_path) {
+        return { ...payment, proof_url: null };
+      }
+
+      const { data } = await supabase.storage
+        .from("payment-proofs")
+        .createSignedUrl(payment.proof_path, 60 * 30);
+
+      return {
+        ...payment,
+        proof_url: data?.signedUrl || null
+      };
+    })
   );
 }
 
@@ -78,13 +107,20 @@ export async function getDoctorDashboard(userId: string) {
 
   const [doctor, appointments, prescriptions] = await Promise.all([
     supabase.from("doctors").select("*").eq("user_id", userId).single(),
-    supabase.from("appointments").select("*, profiles!appointments_patient_id_fkey(full_name, email, phone)").eq("doctor_id", userId).order("created_at", { ascending: false }),
+    supabase.from("appointments").select("*, profiles!appointments_patient_id_fkey(full_name, email, phone), payments(*)").eq("doctor_id", userId).order("created_at", { ascending: false }),
     supabase.from("prescriptions").select("*").eq("doctor_id", userId).order("created_at", { ascending: false })
   ]);
 
+  const appointmentsWithProofs = await Promise.all(
+    (appointments.data || []).map(async (appointment) => ({
+      ...appointment,
+      payments: await addPaymentProofUrls((appointment.payments || []) as PaymentRecord[])
+    }))
+  );
+
   return {
     doctor: doctor.data,
-    appointments: appointments.data || [],
+    appointments: appointmentsWithProofs,
     prescriptions: prescriptions.data || []
   };
 }
@@ -98,7 +134,7 @@ export async function getAssistantDashboard(userId: string) {
 
   let query = supabase
     .from("payments")
-    .select("*, appointments(*, doctors(profiles(full_name)), profiles!payments_patient_id_fkey(full_name, email))")
+    .select("*, appointments(*), profiles!payments_patient_id_fkey(full_name, email)")
     .order("created_at", { ascending: false });
 
   if (doctorIds.length > 0) {
@@ -106,7 +142,7 @@ export async function getAssistantDashboard(userId: string) {
   }
 
   const { data } = await query;
-  return { payments: data || [] };
+  return { payments: await addPaymentProofUrls((data || []) as PaymentRecord[]) };
 }
 
 export async function getAdminDashboard() {
@@ -157,6 +193,8 @@ export async function getAppointment(appointmentId: string, userId: string) {
       .order("created_at", { ascending: false })
   ]);
 
+  const paymentsWithProofs = await addPaymentProofUrls((payments.data || []) as PaymentRecord[]);
+
   return {
     ...appointment,
     doctors: doctor.data
@@ -165,6 +203,6 @@ export async function getAppointment(appointmentId: string, userId: string) {
           profiles: doctorProfile.data
         }
       : null,
-    payments: payments.data || []
+    payments: paymentsWithProofs
   };
 }
