@@ -199,16 +199,22 @@ export async function addPrescriptionAction(formData: FormData) {
   const { user, profile } = await getCurrentProfile();
   if (!supabase || !user || profile?.role !== "doctor") redirect("/login");
 
-  await supabase.from("prescriptions").insert({
+  const patientId = value(formData, "patientId");
+  const { error } = await supabase.from("prescriptions").insert({
     appointment_id: value(formData, "appointmentId"),
-    patient_id: value(formData, "patientId"),
+    patient_id: patientId,
     doctor_id: user.id,
     diagnosis: value(formData, "diagnosis"),
     medicines: value(formData, "medicines"),
     notes: value(formData, "notes")
   });
 
+  if (error) {
+    redirect(`/dashboard/doctor?message=${encodeURIComponent(error.message)}`);
+  }
+
   revalidatePath("/dashboard/doctor");
+  revalidatePath("/dashboard/patient");
 }
 
 export async function updateUserRoleAction(formData: FormData) {

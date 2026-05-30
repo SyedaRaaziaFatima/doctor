@@ -87,17 +87,32 @@ export async function getPatientDashboard(userId: string) {
   if (!supabase) return { appointments: [], history: [], reports: [], prescriptions: [] };
 
   const [appointments, history, reports, prescriptions] = await Promise.all([
-    supabase.from("appointments").select("*, doctors(*, profiles(full_name))").eq("patient_id", userId).order("created_at", { ascending: false }),
+    supabase.from("appointments").select("*").eq("patient_id", userId).order("created_at", { ascending: false }),
     supabase.from("medical_history").select("*").eq("patient_id", userId).order("created_at", { ascending: false }),
     supabase.from("reports").select("*").eq("patient_id", userId).order("created_at", { ascending: false }),
-    supabase.from("prescriptions").select("*, doctors(profiles(full_name))").eq("patient_id", userId).order("created_at", { ascending: false })
+    supabase.from("prescriptions").select("*").eq("patient_id", userId).order("created_at", { ascending: false })
   ]);
+
+  const doctorIds = Array.from(
+    new Set((prescriptions.data || []).map((prescription) => prescription.doctor_id))
+  );
+
+  const doctorProfiles =
+    doctorIds.length > 0
+      ? await supabase.from("profiles").select("id, full_name").in("id", doctorIds)
+      : { data: [] };
+
+  const prescriptionsWithDoctors = (prescriptions.data || []).map((prescription) => ({
+    ...prescription,
+    doctor_profile:
+      doctorProfiles.data?.find((doctor) => doctor.id === prescription.doctor_id) || null
+  }));
 
   return {
     appointments: appointments.data || [],
     history: history.data || [],
     reports: reports.data || [],
-    prescriptions: prescriptions.data || []
+    prescriptions: prescriptionsWithDoctors
   };
 }
 

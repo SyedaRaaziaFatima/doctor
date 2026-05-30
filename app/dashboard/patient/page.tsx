@@ -77,7 +77,11 @@ export default async function PatientDashboardPage() {
             {prescriptions.map((item) => (
               <div key={String(item.id)} className="rounded-2xl bg-slate-50 p-4">
                 <p className="font-semibold text-slate-950">{String(item.diagnosis)}</p>
+                <p className="mt-1 text-sm font-medium text-teal-700">
+                  Dr. {String((item.doctor_profile as { full_name?: string } | null)?.full_name || "Doctor")}
+                </p>
                 <p className="mt-2 text-sm text-slate-600">{String(item.medicines)}</p>
+                {item.notes ? <p className="mt-2 text-sm text-slate-600">{String(item.notes)}</p> : null}
                 <p className="mt-2 text-xs text-slate-500">{String(item.created_at)}</p>
               </div>
             ))}
