@@ -58,7 +58,7 @@ export default async function AssistantDashboardPage() {
                       href={payment.proof_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                      className="rounded-full bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 shadow-sm ring-1 ring-amber-300 transition hover:bg-amber-400"
                     >
                       Open Full Image
                     </a>
