@@ -107,14 +107,31 @@ export async function getDoctorDashboard(userId: string) {
 
   const [doctor, appointments, prescriptions] = await Promise.all([
     supabase.from("doctors").select("*").eq("user_id", userId).single(),
-    supabase.from("appointments").select("*, profiles!appointments_patient_id_fkey(full_name, email, phone), payments(*)").eq("doctor_id", userId).order("created_at", { ascending: false }),
+    supabase
+      .from("appointments")
+      .select("*, profiles!appointments_patient_id_fkey(full_name, email, phone)")
+      .eq("doctor_id", userId)
+      .order("created_at", { ascending: false }),
     supabase.from("prescriptions").select("*").eq("doctor_id", userId).order("created_at", { ascending: false })
   ]);
 
+  const appointmentRows = appointments.data || [];
+  const appointmentIds = appointmentRows.map((appointment) => appointment.id);
+  const payments =
+    appointmentIds.length > 0
+      ? await supabase
+          .from("payments")
+          .select("*")
+          .in("appointment_id", appointmentIds)
+          .order("created_at", { ascending: false })
+      : { data: [] };
+
+  const paymentsWithProofs = await addPaymentProofUrls((payments.data || []) as PaymentRecord[]);
+
   const appointmentsWithProofs = await Promise.all(
-    (appointments.data || []).map(async (appointment) => ({
+    appointmentRows.map(async (appointment) => ({
       ...appointment,
-      payments: await addPaymentProofUrls((appointment.payments || []) as PaymentRecord[])
+      payments: paymentsWithProofs.filter((payment) => payment.appointment_id === appointment.id)
     }))
   );
 
