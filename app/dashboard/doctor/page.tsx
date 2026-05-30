@@ -145,11 +145,11 @@ export default async function DoctorDashboardPage({
                     </div>
                     {appointmentStatus === "confirmed" ? (
                       <p className="mt-3 rounded-xl bg-teal-50 px-3 py-2 text-sm text-teal-800">
-                        This appointment has been confirmed. Decision buttons are now hidden.
+                        This appointment has been confirmed.
                       </p>
                     ) : appointmentStatus === "cancelled" ? (
                       <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">
-                        This appointment has been rejected or cancelled. Decision buttons are now hidden.
+                        This appointment has been rejected or cancelled..
                       </p>
                     ) : !latestPayment ? (
                       <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
