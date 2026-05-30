@@ -132,7 +132,7 @@ export default async function PatientDashboardPage() {
                     <div className="mt-4 flex flex-wrap gap-3">
                       <Link
                         href={`/appointments/${appointment.id}`}
-                        className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                        className="inline-flex rounded-full bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 shadow-sm ring-1 ring-amber-300 transition hover:bg-amber-400"
                       >
                         View Details
                       </Link>
