@@ -2,7 +2,8 @@ import { Search } from "lucide-react";
 import { bookAppointmentAction } from "@/lib/actions/workflow";
 import { getCurrentProfile } from "@/lib/auth";
 import { getDoctors } from "@/lib/data";
-import { Badge, Card, Container, Field, SubmitButton, TextArea } from "@/components/ui";
+import { Badge, Card, Container, Field, TextArea } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 
 type DoctorRow = {
   user_id: string;

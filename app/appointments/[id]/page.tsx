@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { uploadPaymentAction } from "@/lib/actions/workflow";
 import { getCurrentProfile } from "@/lib/auth";
 import { getAppointment } from "@/lib/data";
-import { Badge, Card, Container, Field, SubmitButton } from "@/components/ui";
+import { Badge, Card, Container, Field } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 
 type AppointmentDetail = {
   id: string;

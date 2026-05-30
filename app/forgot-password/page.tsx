@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { resetPasswordAction } from "@/lib/actions/auth";
-import { Card, Container, Field, SubmitButton } from "@/components/ui";
+import { Card, Container, Field } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function ForgotPasswordPage({
   searchParams

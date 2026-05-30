@@ -1,7 +1,8 @@
 import { verifyPaymentAction } from "@/lib/actions/workflow";
 import { requireRole } from "@/lib/auth";
 import { getAssistantDashboard } from "@/lib/data";
-import { Badge, Card, SubmitButton } from "@/components/ui";
+import { Badge, Card } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { DashboardShell, StatCard } from "@/components/dashboard";
 
 type PaymentRow = {

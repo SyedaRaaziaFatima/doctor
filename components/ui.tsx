@@ -110,11 +110,3 @@ export function TextArea({
     </label>
   );
 }
-
-export function SubmitButton({ children }: { children: ReactNode }) {
-  return (
-    <button className="inline-flex items-center justify-center rounded-full bg-teal-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700">
-      {children}
-    </button>
-  );
-}

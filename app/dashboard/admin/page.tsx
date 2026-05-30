@@ -1,7 +1,8 @@
 import { requireRole } from "@/lib/auth";
 import { getAdminDashboard } from "@/lib/data";
 import { assignAssistantAction, updateUserRoleAction } from "@/lib/actions/workflow";
-import { Badge, Card, SubmitButton } from "@/components/ui";
+import { Badge, Card } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { DashboardShell, StatCard } from "@/components/dashboard";
 import { formatRole } from "@/lib/utils";
 

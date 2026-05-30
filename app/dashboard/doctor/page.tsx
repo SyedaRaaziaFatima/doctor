@@ -1,14 +1,20 @@
 import { addPrescriptionAction, saveDoctorProfileAction } from "@/lib/actions/workflow";
 import { requireRole } from "@/lib/auth";
 import { getDoctorDashboard } from "@/lib/data";
-import { Badge, Card, Field, SubmitButton, TextArea } from "@/components/ui";
+import { Badge, Card, Field, TextArea } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { DashboardShell, StatCard } from "@/components/dashboard";
 
 type Row = Record<string, string | number | null | Record<string, unknown>>;
 
-export default async function DoctorDashboardPage() {
+export default async function DoctorDashboardPage({
+  searchParams
+}: {
+  searchParams: Promise<{ message?: string }>;
+}) {
   const { user, profile } = await requireRole(["doctor"]);
   if (!user || !profile) return null;
+  const params = await searchParams;
 
   const data = await getDoctorDashboard(user.id);
   const doctor = data.doctor as Row | null;
@@ -26,6 +32,9 @@ export default async function DoctorDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <Card>
           <h2 className="text-2xl font-bold text-slate-950">Doctor Profile and Clinic</h2>
+          {params.message ? (
+            <p className="mt-4 rounded-2xl bg-teal-50 px-4 py-3 text-sm text-teal-800">{params.message}</p>
+          ) : null}
           <form action={saveDoctorProfileAction} className="mt-5 grid gap-4">
             <Field label="Specialization" name="specialization" required defaultValue={String(doctor?.specialization || "General Physician")} />
             <label className="grid gap-2 text-sm font-medium text-slate-700">

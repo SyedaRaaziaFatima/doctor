@@ -2,7 +2,8 @@ import Link from "next/link";
 import { addMedicalHistoryAction, uploadReportAction } from "@/lib/actions/workflow";
 import { requireRole } from "@/lib/auth";
 import { getPatientDashboard } from "@/lib/data";
-import { Badge, Card, Field, SubmitButton, TextArea } from "@/components/ui";
+import { Badge, Card, Field, TextArea } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { DashboardShell, EmptyState, StatCard } from "@/components/dashboard";
 
 type Row = Record<string, string | number | null | Record<string, unknown> | Array<Record<string, unknown>>>;

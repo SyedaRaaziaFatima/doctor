@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile, dashboardPath } from "@/lib/auth";
 import { signInAction } from "@/lib/actions/auth";
-import { Card, Container, Field, SubmitButton } from "@/components/ui";
+import { Card, Container, Field } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function LoginPage({
   searchParams

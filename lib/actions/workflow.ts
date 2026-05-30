@@ -14,28 +14,51 @@ export async function saveDoctorProfileAction(formData: FormData) {
   const { user, profile } = await getCurrentProfile();
   if (!supabase || !user || profile?.role !== "doctor") redirect("/login");
 
-  await supabase.from("doctors").upsert({
-    user_id: user.id,
-    specialization: value(formData, "specialization"),
-    treatment_type: value(formData, "treatmentType"),
-    diseases: value(formData, "diseases")
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean),
-    city: value(formData, "city"),
-    experience_years: Number(value(formData, "experienceYears") || 0),
-    consultation_fee: Number(value(formData, "consultationFee") || 0),
-    bio: value(formData, "bio")
-  });
+  const diseases = value(formData, "diseases")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-  await supabase.from("clinics").upsert({
-    doctor_id: user.id,
-    name: value(formData, "clinicName"),
-    address: value(formData, "clinicAddress"),
-    fee: Number(value(formData, "consultationFee") || 0)
-  });
+  const { error: doctorError } = await supabase
+    .from("doctors")
+    .upsert(
+      {
+        user_id: user.id,
+        specialization: value(formData, "specialization"),
+        treatment_type: value(formData, "treatmentType"),
+        diseases,
+        city: value(formData, "city"),
+        experience_years: Number(value(formData, "experienceYears") || 0),
+        consultation_fee: Number(value(formData, "consultationFee") || 0),
+        bio: value(formData, "bio"),
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: "user_id" }
+    );
+
+  if (doctorError) {
+    redirect(`/dashboard/doctor?message=${encodeURIComponent(doctorError.message)}`);
+  }
+
+  const { error: clinicError } = await supabase
+    .from("clinics")
+    .upsert(
+      {
+        doctor_id: user.id,
+        name: value(formData, "clinicName") || "Main Clinic",
+        address: value(formData, "clinicAddress") || "Not set",
+        fee: Number(value(formData, "consultationFee") || 0)
+      },
+      { onConflict: "doctor_id" }
+    );
+
+  if (clinicError) {
+    redirect(`/dashboard/doctor?message=${encodeURIComponent(clinicError.message)}`);
+  }
 
   revalidatePath("/dashboard/doctor");
+  revalidatePath("/doctors");
+  redirect("/dashboard/doctor?message=Doctor profile updated");
 }
 
 export async function bookAppointmentAction(formData: FormData) {
