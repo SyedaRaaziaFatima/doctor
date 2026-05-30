@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { uploadPaymentAction } from "@/lib/actions/workflow";
+import { cancelPatientAppointmentAction, uploadPaymentAction } from "@/lib/actions/workflow";
 import { getCurrentProfile } from "@/lib/auth";
 import { getAppointment } from "@/lib/data";
 import { Badge, Card, Container, Field } from "@/components/ui";
@@ -18,6 +18,21 @@ type AppointmentDetail = {
   };
   payments?: Array<{ status?: string; amount?: number; proof_path?: string; proof_url?: string | null }>;
 };
+
+function appointmentLabel(status: string) {
+  if (status === "confirmed") return "Accepted";
+  if (status === "cancelled") return "Rejected / Cancelled";
+  if (status === "payment_uploaded") return "Payment Uploaded";
+  if (status === "pending_payment") return "Pending Payment";
+  return status;
+}
+
+function appointmentTone(status: string) {
+  if (status === "confirmed") return "teal" as const;
+  if (status === "cancelled") return "red" as const;
+  if (status === "payment_uploaded") return "amber" as const;
+  return "slate" as const;
+}
 
 export default async function AppointmentDetailPage({
   params,
@@ -46,7 +61,7 @@ export default async function AppointmentDetailPage({
               <h1 className="text-3xl font-bold text-slate-950">Appointment Detail</h1>
               <p className="mt-2 text-slate-600">{appointment.reason}</p>
             </div>
-            <Badge tone={appointment.status === "confirmed" ? "teal" : "amber"}>{appointment.status}</Badge>
+            <Badge tone={appointmentTone(appointment.status)}>{appointmentLabel(appointment.status)}</Badge>
           </div>
           {query.message ? (
             <p className="mt-5 rounded-2xl bg-teal-50 px-4 py-3 text-sm text-teal-800">{query.message}</p>
@@ -64,7 +79,17 @@ export default async function AppointmentDetailPage({
             </div>
           </div>
 
-          {profile.role === "patient" && appointment.status !== "confirmed" ? (
+          {profile.role === "patient" && ["pending_payment", "payment_uploaded"].includes(appointment.status) ? (
+            <form action={cancelPatientAppointmentAction} className="mt-6">
+              <input type="hidden" name="appointmentId" value={appointment.id} />
+              <input type="hidden" name="returnTo" value={`/appointments/${appointment.id}`} />
+              <button className="rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100">
+                Cancel Appointment
+              </button>
+            </form>
+          ) : null}
+
+          {profile.role === "patient" && appointment.status !== "confirmed" && appointment.status !== "cancelled" ? (
             <form action={uploadPaymentAction} className="mt-8 grid gap-4 rounded-3xl border border-slate-200 p-5">
               <h2 className="text-xl font-bold text-slate-950">Upload Payment Proof</h2>
               <input type="hidden" name="appointmentId" value={appointment.id} />

@@ -9,6 +9,14 @@ function value(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
 }
 
+function statusLabel(status: string) {
+  if (status === "confirmed") return "Accepted";
+  if (status === "cancelled") return "Cancelled";
+  if (status === "payment_uploaded") return "Waiting for approval";
+  if (status === "pending_payment") return "Pending payment";
+  return status;
+}
+
 export async function saveDoctorProfileAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { user, profile } = await getCurrentProfile();
@@ -67,14 +75,38 @@ export async function bookAppointmentAction(formData: FormData) {
   if (!supabase || !user || profile?.role !== "patient") redirect("/login");
 
   const doctorId = value(formData, "doctorId");
+  const appointmentDate = value(formData, "appointmentDate");
+  const appointmentTime = value(formData, "appointmentTime");
+
+  const { data: existingSlot, error: slotError } = await supabase
+    .from("appointments")
+    .select("id,status")
+    .eq("doctor_id", doctorId)
+    .eq("appointment_date", appointmentDate)
+    .eq("appointment_time", appointmentTime)
+    .neq("status", "cancelled")
+    .limit(1)
+    .maybeSingle();
+
+  if (slotError) {
+    redirect(`/doctors?message=${encodeURIComponent(slotError.message)}`);
+  }
+
+  if (existingSlot) {
+    redirect(
+      `/doctors?message=${encodeURIComponent(
+        "This appointment time is already booked. Please choose another date or time."
+      )}`
+    );
+  }
 
   const { data, error } = await supabase
     .from("appointments")
     .insert({
       patient_id: user.id,
       doctor_id: doctorId,
-      appointment_date: value(formData, "appointmentDate"),
-      appointment_time: value(formData, "appointmentTime"),
+      appointment_date: appointmentDate,
+      appointment_time: appointmentTime,
       reason: value(formData, "reason"),
       status: "pending_payment"
     })
@@ -86,6 +118,51 @@ export async function bookAppointmentAction(formData: FormData) {
   }
 
   redirect(`/appointments/${data.id}`);
+}
+
+export async function cancelPatientAppointmentAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const { user, profile } = await getCurrentProfile();
+  if (!supabase || !user || profile?.role !== "patient") redirect("/login");
+
+  const appointmentId = value(formData, "appointmentId");
+  const returnTo = value(formData, "returnTo") || "/dashboard/patient";
+
+  const { data: appointment, error: lookupError } = await supabase
+    .from("appointments")
+    .select("status")
+    .eq("id", appointmentId)
+    .eq("patient_id", user.id)
+    .single<{ status: string }>();
+
+  if (lookupError || !appointment) {
+    redirect(`${returnTo}?message=${encodeURIComponent(lookupError?.message || "Appointment not found")}`);
+  }
+
+  if (appointment.status === "confirmed") {
+    redirect(
+      `${returnTo}?message=${encodeURIComponent(
+        "Confirmed appointments cannot be cancelled from here. Please contact the doctor."
+      )}`
+    );
+  }
+
+  const { error } = await supabase
+    .from("appointments")
+    .update({
+      status: "cancelled",
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", appointmentId)
+    .eq("patient_id", user.id);
+
+  if (error) {
+    redirect(`${returnTo}?message=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/dashboard/patient");
+  revalidatePath("/dashboard/doctor");
+  redirect(`${returnTo}?message=${encodeURIComponent(`Appointment ${statusLabel("cancelled")}`)}`);
 }
 
 export async function uploadPaymentAction(formData: FormData) {
@@ -153,6 +230,33 @@ export async function verifyPaymentAction(formData: FormData) {
 
   revalidatePath("/dashboard/assistant");
   revalidatePath("/dashboard/admin");
+}
+
+export async function manageDoctorAppointmentAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const { user, profile } = await getCurrentProfile();
+  if (!supabase || !user || profile?.role !== "doctor") redirect("/login");
+
+  const appointmentId = value(formData, "appointmentId");
+  const decision = value(formData, "decision");
+  const status = decision === "confirm" ? "confirmed" : "cancelled";
+
+  const { error } = await supabase
+    .from("appointments")
+    .update({
+      status,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", appointmentId)
+    .eq("doctor_id", user.id);
+
+  if (error) {
+    redirect(`/dashboard/doctor?message=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/dashboard/doctor");
+  revalidatePath("/dashboard/patient");
+  redirect(`/dashboard/doctor?message=${encodeURIComponent(`Appointment ${status}`)}`);
 }
 
 export async function addMedicalHistoryAction(formData: FormData) {

@@ -1,4 +1,8 @@
-import { addPrescriptionAction, saveDoctorProfileAction } from "@/lib/actions/workflow";
+import {
+  addPrescriptionAction,
+  manageDoctorAppointmentAction,
+  saveDoctorProfileAction
+} from "@/lib/actions/workflow";
 import { requireRole } from "@/lib/auth";
 import { getDoctorDashboard } from "@/lib/data";
 import { Badge, Card, Field, TextArea } from "@/components/ui";
@@ -6,6 +10,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { DashboardShell, StatCard } from "@/components/dashboard";
 
 type PaymentProof = {
+  id?: string;
   status?: string;
   amount?: number;
   proof_path?: string;
@@ -80,9 +85,51 @@ export default async function DoctorDashboardPage({
                     <div>
                       <p className="font-semibold text-slate-950">{patient?.full_name || "Patient"}</p>
                       <p className="text-sm text-slate-600">{String(appointment.reason)}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {String(appointment.appointment_date || "")} {String(appointment.appointment_time || "")}
+                      </p>
                     </div>
                     <Badge tone={appointment.status === "confirmed" ? "teal" : "amber"}>{String(appointment.status)}</Badge>
                   </div>
+
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <p className="font-semibold text-slate-950">Appointment Management</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Payment: {latestPayment?.status || "not uploaded"} | Appointment: {String(appointment.status)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <form action={manageDoctorAppointmentAction}>
+                          <input type="hidden" name="appointmentId" value={String(appointment.id)} />
+                          <input type="hidden" name="decision" value="confirm" />
+                          <SubmitButton loadingText="Confirming...">Confirm</SubmitButton>
+                        </form>
+                        <form action={manageDoctorAppointmentAction}>
+                          <input type="hidden" name="appointmentId" value={String(appointment.id)} />
+                          <input type="hidden" name="decision" value="reject" />
+                          <button className="inline-flex items-center justify-center rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100">
+                            Reject
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                    {!latestPayment ? (
+                      <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                        The patient has not uploaded payment proof yet. You can wait for payment before confirming.
+                      </p>
+                    ) : latestPayment.status !== "approved" ? (
+                      <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                        Payment is {latestPayment.status || "pending"}. Review the screenshot before confirming.
+                      </p>
+                    ) : (
+                      <p className="mt-3 rounded-xl bg-teal-50 px-3 py-2 text-sm text-teal-800">
+                        Payment is approved. This appointment is ready to confirm.
+                      </p>
+                    )}
+                  </div>
+
                   {latestPayment ? (
                     <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">

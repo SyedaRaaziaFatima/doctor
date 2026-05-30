@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { addMedicalHistoryAction, uploadReportAction } from "@/lib/actions/workflow";
+import {
+  addMedicalHistoryAction,
+  cancelPatientAppointmentAction,
+  uploadReportAction
+} from "@/lib/actions/workflow";
 import { requireRole } from "@/lib/auth";
 import { getPatientDashboard } from "@/lib/data";
 import { Badge, Card, Field, TextArea } from "@/components/ui";
@@ -7,6 +11,21 @@ import { SubmitButton } from "@/components/submit-button";
 import { DashboardShell, EmptyState, StatCard } from "@/components/dashboard";
 
 type Row = Record<string, string | number | null | Record<string, unknown> | Array<Record<string, unknown>>>;
+
+function appointmentLabel(status: string) {
+  if (status === "confirmed") return "Accepted";
+  if (status === "cancelled") return "Rejected / Cancelled";
+  if (status === "payment_uploaded") return "Payment Uploaded";
+  if (status === "pending_payment") return "Pending Payment";
+  return status;
+}
+
+function appointmentTone(status: string) {
+  if (status === "confirmed") return "teal" as const;
+  if (status === "cancelled") return "red" as const;
+  if (status === "payment_uploaded") return "amber" as const;
+  return "slate" as const;
+}
 
 export default async function PatientDashboardPage() {
   const { user, profile } = await requireRole(["patient"]);
@@ -102,13 +121,32 @@ export default async function PatientDashboardPage() {
                 <EmptyState title="No appointments yet" text="Find a doctor and book your first consultation." />
               ) : (
                 appointments.map((appointment) => (
-                  <Link key={String(appointment.id)} href={`/appointments/${appointment.id}`} className="rounded-2xl border border-slate-200 p-4 transition hover:border-teal-300">
+                  <div key={String(appointment.id)} className="rounded-2xl border border-slate-200 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <p className="font-semibold text-slate-950">{String(appointment.reason || "Consultation")}</p>
-                      <Badge tone={appointment.status === "confirmed" ? "teal" : "amber"}>{String(appointment.status)}</Badge>
+                      <Badge tone={appointmentTone(String(appointment.status))}>
+                        {appointmentLabel(String(appointment.status))}
+                      </Badge>
                     </div>
                     <p className="mt-2 text-sm text-slate-600">{String(appointment.appointment_date)} at {String(appointment.appointment_time)}</p>
-                  </Link>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link
+                        href={`/appointments/${appointment.id}`}
+                        className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                      >
+                        View Details
+                      </Link>
+                      {["pending_payment", "payment_uploaded"].includes(String(appointment.status)) ? (
+                        <form action={cancelPatientAppointmentAction}>
+                          <input type="hidden" name="appointmentId" value={String(appointment.id)} />
+                          <input type="hidden" name="returnTo" value="/dashboard/patient" />
+                          <button className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100">
+                            Cancel Appointment
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+                  </div>
                 ))
               )}
             </div>
