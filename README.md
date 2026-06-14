@@ -97,3 +97,4 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 5. Deploy.
 
 The project is designed to work on Vercel free tier and Supabase free tier for a semester project/demo.
+https://sparkly-haupia-9d1800.netlify.app/
